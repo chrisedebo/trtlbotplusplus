@@ -68,14 +68,15 @@ async def on_ready():
 task = client.loop.create_task(wallet_watcher())
 
 # MARKET COMMANDS ###
-@client.command()
-async def faucet():
+@client.command(pass_context=True)
+async def faucet(ctx):
     """ Returns balance in the faucet """
     resp = requests.get("https://faucet.{}.me/balance".format(config['symbol']))
     desc = "```Donations: {}```".format(config['faucet'])
     em = discord.Embed(title = "The faucet has {:,} {} left".format(int(float(resp.json()['available'])), config['symbol']), description = desc)
     em.url = "https://faucet.{}.me".format(config['symbol'])
     await client.say(embed = em)
+    await client.delete_message(ctx.message)
 
 
 @client.command(pass_context=True)
@@ -108,10 +109,11 @@ async def price(ctx, exchange=None):
     coindata_embed.add_field(name="Volume", value="{:,.2f} BTC".format(float(coindata.json()['volume'])), inline=True)
     coindata_embed.add_field(name="BTC-USD", value="${0:,.2f} USD".format(float(btc.json()['last'])), inline=True)
     await client.say(embed=coindata_embed)
+    await client.delete_message(ctx.message)
 
 
-@client.command()
-async def mcap():
+@client.command(pass_context=True)
+async def mcap(ctx):
     """ Returns current marketcap (unusable in main Turtlecoin Discord) """
     try:
         if ctx.message.server.id == "388915017187328002":
@@ -130,36 +132,41 @@ async def mcap():
         return
     mcap = float(trtl.json()['price'])*float(btc.json()['last'])*supply
     await client.say("{0}'s Marketcap is **${1:,.2f}** USD".format(config['coin'], mcap))
+    await client.delete_message(ctx.message)
 
 
 ### NETWORK COMMANDS ###
-@client.command()
-async def hashrate():
+@client.command(pass_context=True)
+async def hashrate(ctx):
     """ Returns network hashrate """
     data = daemon.getlastblockheader()
     hashrate = format_hash(float(data["block_header"]["difficulty"]) / 30)
     await client.say("The current global hashrate is **{}/s**".format(hashrate))
+    await client.delete_message(ctx.message)
 
 
-@client.command()
-async def difficulty():
+@client.command(pass_context=True)
+async def difficulty(ctx):
     """ Returns network difficulty """
     data = daemon.getlastblockheader()
     difficulty = float(data["block_header"]["difficulty"])
     await client.say("The current difficulty is **{0:,.0f}**".format(difficulty))
+    await client.delete_message(ctx.message)
 
 
-@client.command()
-async def height():
+@client.command(pass_context=True)
+async def height(ctx):
     """ Returns the current block count """
     await client.say("The current block height is **{:,}**".format(rpc.getStatus()['blockCount']))
+    await client.delete_message(ctx.message)
 
 
-@client.command()
-async def supply():
+@client.command(pass_context=True)
+async def supply(ctx):
     """ Returns the current circulating supply """
     supply = get_supply()
     await client.say("The current circulating supply is **{:0,.2f}** {}".format(supply, config['symbol']))
+    await client.delete_message(ctx.message)
 
 
 # WALLET COMMANDS ###
@@ -214,7 +221,7 @@ async def registerwallet(ctx, address):
     elif len(address) < 99:
         err_embed.description = "Your wallet must be 99 characeters long, your entry was too short"
     await client.say(embed = err_embed)
-
+    await client.delete_message(ctx.message)
 
 @client.command(pass_context=True)
 async def updatewallet(ctx, address):
@@ -264,7 +271,7 @@ async def updatewallet(ctx, address):
     elif len(address) < 99:
         err_embed.description = "Your wallet must be 99 characeters long, your entry was too short"
     await client.say(embed=err_embed)
-
+    await client.delete_message(ctx.message)
 
 @client.command(pass_context=True)
 async def wallet(ctx, user: discord.User=None):
@@ -291,6 +298,7 @@ async def wallet(ctx, user: discord.User=None):
             await client.send_message(ctx.message.author, embed = good_embed)
             return
     await client.send_message(ctx.message.author, embed = err_embed)
+    await client.delete_message(ctx.message)
 
 
 @client.command(pass_context=True)
@@ -313,7 +321,7 @@ async def deposit(ctx, user: discord.User=None):
         err_embed.description = "You haven't registered a wallet!"
         err_embed.add_field(name="Help", value="Use `{}registerwallet <addr>` before trying to tip!".format(config['prefix']))
         await client.say(embed=err_embed)
-
+    await client.delete_message(ctx.message)
 
 @client.command(pass_context=True)
 async def balance(ctx):
@@ -335,6 +343,8 @@ async def balance(ctx):
         err_embed.description = "You haven't registered a wallet!"
         err_embed.add_field(name="Help", value="Use `{}registerwallet <addr>` before trying to tip!".format(config['prefix']))
         await client.say(embed=err_embed)
+    
+    await client.delete_message(ctx.message)
 
 
 EMOJI_MONEYBAGS = "\U0001F4B8"
